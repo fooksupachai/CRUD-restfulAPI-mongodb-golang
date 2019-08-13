@@ -1,20 +1,22 @@
 package main
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"log"
-	"encoding/json"
-	"github.com/gorilla/mux"
 )
 
+// Developer struct
 type Developer struct {
-	ID string 
-	Name string
+	ID   string `bson:"id"`
+	Name string `bson:"name"`
 }
 
-func getDevelopers() []Developer{
+func getDevelopers() []Developer {
 	session, err := mgo.Dial("mongodb://127.0.0.1:27017/testDB")
 	if err != nil {
 		panic(err)
@@ -31,7 +33,7 @@ func getDevelopers() []Developer{
 	return developers
 }
 
-func getDeveloper(id string) Developer{
+func getDeveloper(id string) Developer {
 	session, err := mgo.Dial("mongodb://127.0.0.1:27017/testDB")
 	if err != nil {
 		panic(err)
@@ -48,7 +50,7 @@ func getDeveloper(id string) Developer{
 
 }
 
-func removeDeveloper(id string) Developer{
+func removeDeveloper(id string) Developer {
 	session, err := mgo.Dial("mongodb://127.0.0.1:27017/testDB")
 	if err != nil {
 		panic(err)
@@ -65,7 +67,7 @@ func removeDeveloper(id string) Developer{
 
 }
 
-func createDeveloper(e Developer) error{
+func createDeveloper(e Developer) error {
 	session, err := mgo.Dial("mongodb://127.0.0.1:27017/testDB")
 	if err != nil {
 		panic(err)
@@ -83,8 +85,12 @@ func updateDeveloper(e Developer) error {
 	}
 	defer session.Close()
 
+	newID := "0000"
+	selector := bson.M{"id": e.ID}
+	updator := bson.M{"$set": bson.M{"id": newID}}
+
 	c := session.DB("testDB").C("developers")
-	return c.Update(e.ID, "0000")
+	return c.Update(selector, updator)
 }
 
 func getAllDevelopers(res http.ResponseWriter, req *http.Request) {
@@ -98,7 +104,7 @@ func getOneDeveloper(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(developer)
 }
 
-func postDeveloper(res http.ResponseWriter, req *http.Request){
+func postDeveloper(res http.ResponseWriter, req *http.Request) {
 	var item Developer
 	json.NewDecoder(req.Body).Decode(&item)
 	createDeveloper(item)
@@ -109,7 +115,6 @@ func putDeveloper(res http.ResponseWriter, req *http.Request) {
 	json.NewDecoder(req.Body).Decode(&item)
 	updateDeveloper(item)
 }
-
 
 func DeleteDeveloper(res http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
@@ -127,6 +132,6 @@ func handleRequest() {
 	http.ListenAndServe(":8080", router)
 }
 
-func main()  {
+func main() {
 	handleRequest()
 }
